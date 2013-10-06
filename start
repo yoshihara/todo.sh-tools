@@ -1,0 +1,35 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
+if ARGV[1].to_i == 0 # todoのIDは0はないのでこれでいい
+  puts "Usage:"
+  puts "      todo.sh check ID#"
+  puts "      ID# : todo number you start now"
+  exit true
+end
+
+todos = File.read(ENV['TODO_FILE'])
+todos = todos.split($/)
+
+index = ARGV.last.to_i - 1
+todo = todos[index]
+if todo.nil?
+  puts "Todo: #{index + 1} is not found."
+  exit(false)
+end
+
+if /- \\e\[m$/ =~ todo
+  puts "Todo: #{index + 1} is checking now."
+  exit false
+end
+
+now = Time.now.strftime("%H:%M")
+todos[index] = "\e[31m#{todo} #{now}- \e[m"
+
+File.open(ENV['TODO_FILE'], "w") do |file|
+  file.puts(todos.join("\n"))
+end
+
+puts "Todo #{index + 1}: #{todo} is checked now. You start it now!"
+puts "--"
+puts `#{ENV['TODO_FULL_SH']} list`

@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
+if ARGV.last == 0 # todoのIDは0はないのでこれでいい
+  puts "Usage:"
+  puts "      todo.sh uncheck [-d] ID#"
+  puts "      ID# : todo number you end now"
+  puts "      Option:"
+  puts "        -d: done the task when unckecking"
+  exit true
+end
+
+todos = File.read(ENV['TODO_FILE'])
+todos = todos.split($/)
+
+index = ARGV.last.to_i - 1
+todo = todos[index]
+
+if todo.nil?
+  puts "Todo: #{index + 1} is not found."
+  exit(false)
+end
+
+now = Time.now.strftime("%H:%M")
+unless /- \e\[m$/ =~ todo
+  todo = "(A) #{todo} #{now}-"
+  puts "Todo #{index + 1} isn't checked, so I check it now."
+end
+
+todos[index] = todo.gsub(/\e\[31m(.+) \e\[m$/, "\\1") + now
+File.open(ENV['TODO_FILE'], "w") do |file|
+  file.puts(todos.join("\n"))
+end
+
+# Uncheckと同時に終了する場合（-dオプション）
+if ARGV[1] == "-d"
+  puts `#{ENV['TODO_FULL_SH']} do #{index + 1}`
+else
+  puts "Todo #{index + 1} is unchecked now."
+end
+puts "--"
+puts `#{ENV['TODO_FULL_SH']} list`

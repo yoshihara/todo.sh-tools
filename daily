@@ -1,0 +1,36 @@
+#! /usr/bin/env ruby
+# -*- coding: utf-8 -*-
+require "time"
+
+today = Time.now.strftime("%Y-%m-%d").to_s
+case ARGV.size
+when 1
+  date = today
+when 2
+  date = ARGV[1]
+  project = nil
+when 3
+  date = ARGV[1]
+  project = ARGV[2]
+end
+
+total_elapsed_time = 0
+listed_todo_pattern = project ? /\Ax #{date}\s*(.+\s+\+#{project}.+)/ : /\Ax #{date}\s*(.+)/
+File.open(ENV['DONE_FILE']) do |todo_file|
+  todo_file.each_line do |_todo|
+    if listed_todo_pattern =~ _todo
+      todo = $1
+      doing_times = todo.scan(/\d\d:\d\d-\d\d:\d\d/)
+      elapsed_part_times = doing_times.collect do |time|
+        started, ended = time.split("-").map { |t| Time.parse("#{date} #{t}") }
+        (ended - started) / 60
+      end
+
+      elapsed_all_time = elapsed_part_times.inject(:+).to_i
+      total_elapsed_time += elapsed_all_time
+      puts "#{elapsed_all_time.to_s.rjust(3)} #{todo}"
+    end
+  end
+end
+puts total_elapsed_time / 60.0
+
